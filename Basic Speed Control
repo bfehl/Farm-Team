@@ -1,0 +1,95 @@
+#include <Servo.h>
+
+typedef struct MotorDef
+{
+    Servo   Motor; 
+    int     Pin;   // Indicates the Pin this motor is connected to
+};
+
+MotorDef Motors;
+
+typedef struct ESCSettingsDef
+{
+  int Backward;
+  int Forward;
+  int Stop;
+};
+
+ESCSettingsDef ESCSettings; 
+
+int CurrentSpeed;
+int Step = 2;
+
+
+#define ESC_FORW_DEFAULT 200
+#define ESC_BACK_DEFAULT 20
+#define ESC_STOP 90
+
+
+/////////////////////////////////////////////////
+void setup() {
+  Serial.begin(9600);
+  Serial.println("Setup: Serial port communication at 9600bps");
+
+  Motors.Pin = 7;
+  int pin = Motors.Pin;
+  Motors.Motor.attach(pin);
+
+  ESCSettings.Backward = ESC_BACK_DEFAULT; // 20
+  ESCSettings.Forward = ESC_FORW_DEFAULT; // 200
+  ESCSettings.Stop = ESC_STOP; //90
+}
+
+void Run_on_command(){
+  //Start with motors still
+  Motors.Motor.write(ESCSettings.Stop);
+
+  Serial.println("Running ESC");
+  Serial.println("Step = ");
+  Serial.print(Step);
+  Serial.println("\nPress 'u' to increase speed, 'd' to reduce speed");
+
+  //Set current speed to motors stopped
+  CurrentSpeed = ESCSettings.Stop;
+
+  while(1){
+    while(!Serial.available())
+    {
+    }
+    char currentChar = Serial.read();
+    
+    if(currentChar == 'u'){
+      Serial.println("\nIncreasing motor speed by step");
+      if(CurrentSpeed + Step < ESCSettings.Forward){
+        CurrentSpeed = CurrentSpeed + Step;
+        Serial.println("New speed = ");
+        Serial.print(CurrentSpeed);
+      }
+      else{
+        Serial.println("\nMax speed reaches\n");
+      }
+    }
+    if(currentChar == 'd'){
+      Serial.println("\nDecreasing motor speed by step\n");
+      if(CurrentSpeed - Step >= ESCSettings.Backward){
+        CurrentSpeed = CurrentSpeed - Step;
+        Serial.println("New speed = ");
+        Serial.print(CurrentSpeed);
+      }
+      else{
+        Serial.println("\nMin speed reached\n");
+      }
+    }
+    if(currentChar == 'e'){
+      Serial.println("/nStopping Motors\n");
+      CurrentSpeed = ESCSettings.Stop;
+    }
+    Motors.Motor.write(CurrentSpeed);
+  }
+  
+}
+
+void loop() {
+  Run_on_command();
+}
+
