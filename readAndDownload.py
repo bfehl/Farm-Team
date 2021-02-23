@@ -83,8 +83,7 @@ while True:
                 with open("example_download.py",'wb') as f:
                     f.write(r.content)
                 import example_download
-        else:
-            print("it's akready herem,bunck")
+                
         print(example_download.exfunc())
 
     elif id ==1:
