@@ -19,7 +19,8 @@ def readTag(image):
     results = detector.detect(gray)
     print("[INFO] {} total AprilTags detected".format(len(results)))
 
-    # loop over the AprilTag detection results
+    # loop over the AprilTag detection result
+    #Almost all of this can be cut for efficiencies sake, no real reason to draw them
     for r in results:
         # extract the bounding box (x, y)-coordinates for the AprilTag
         # and convert each of the (x, y)-coordinate pairs to integers
@@ -70,31 +71,32 @@ while True:
     #cv2.moveWindow('my_cam', 0,0)
     id = readTag(frame)
     print("tag ID", id)
-    #Currently only recognizes tags 0-3
+    #Currently only knows what do do with a few tags
     if id == 0:
         #If file not imported, attempt to import the proper file, if it doesn't work, download and import it. Finally, run
         if 'example_download' not in sys.modules:
             try:
                 import example_download
-            except ImportError:
+            except ModuleNotFoundError:
                 #raw of github urls
                 url = "https://raw.githubusercontent.com/jwolf0/download/main/downloadfile.py"
                 r = requests.get(url)
                 with open("example_download.py",'wb') as f:
                     f.write(r.content)
                 import example_download
-                
+
         print(example_download.exfunc())
 
     elif id ==1:
-        try:
-            import example_download_1
-        except ImportError:
-            url = "https://raw.githubusercontent.com/jwolf0/download/main/example_download_1.py"
-            r = requests.get(url)
-            with open("example_download_1.py", 'wb') as f:
-                f.write(r.content)
-            import example_download_1
+        if 'example_download_1' not in sys.modules:
+            try:
+                import example_download_1
+            except ModuleNotFoundError:
+                url = "https://raw.githubusercontent.com/jwolf0/download/main/example_download_1.py"
+                r = requests.get(url)
+                with open("example_download_1.py", 'wb') as f:
+                    f.write(r.content)
+                import example_download_1
         for i in range(5):
             x = example_download_1.multiply_by_two(x)
         print(x)
