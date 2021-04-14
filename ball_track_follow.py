@@ -12,6 +12,9 @@ import time
 # ball in the HSV color space, then initialize the
 # list of tracked points
 
+
+
+
 lower = (76, 63, 83)
 upper = (101, 168, 176)
 buffer = 20
@@ -28,12 +31,66 @@ camSet='nvarguscamerasrc sensor-id=0 ! video/x-raw(memory:NVMM), width=3264, hei
 cam = cv2.VideoCapture(camSet)
 time.sleep(2)
 
-#create list for dist. averaging
-#d = deque(maxlen=10)
-
 
 #start serial comms
 robot = serial.Serial('/dev/ttyUSB0', 9600)
+drive_state = 0
+
+
+#create functions to handle movement
+'''
+0=stop
+1=forward
+2=left
+3=right
+4=reverse
+'''
+
+def stop():
+    global drive_state, robot
+    if drive_state !=0:
+        try:
+            robot.write(b'0')
+            drive_state = 0
+        except Exception as e: print(e)
+
+def forward():
+    global drive_state, robot
+    if drive_state!=1:
+        try:
+            robot.write(b'1')
+            drive_state=1
+        except Exception as e: print(e)
+
+def left ():
+    global drive_state, robot
+    if drive_state!=2:
+        try:
+            robot.write(b'2')
+            drive_state=2
+        except Exception as e: print(e)
+
+def right():
+    global drive_state, robot
+    if drive_state!=3:
+        try: 
+            robot.write(b'3')
+            drive_state = 3
+        except Exception as e: print(e)
+
+def reverse():
+    global drive_state, robot
+    if drive_state!=4:
+        try:
+            robot.write(b'4')
+            drive_state=4
+        except Exception as e: print(e)
+
+
+
+
+
+
 
 counter = 0
 while True:
@@ -72,68 +129,62 @@ while True:
 
         #calculate and print distance
         
-        #1in = 96px
-        #at 8inches, ball interperated radius is 65px. 8inch = 768px
-        #cam_interpreted_size = real_size*focal_len/dist
-        #cam_interpreted * dist / realsize = focal_len
-        #focal_len = (65 * 768)/real_radius
-        #I exeperimentally got 416px
+        '''
+        1in = 96px
+        at 8inches, ball interperated radius is 65px. 8inch = 768px
+        cam_interpreted_size = real_size*focal_len/dist
+        cam_interpreted * dist / realsize = focal_len
+        focal_len = (65 * 768)/real_radius
+        I exeperimentally got 416px
+        '''
 
         focal_len = 416
         dist = (real_radius * focal_len)/radius
         inches = dist/96
-        print(inches, "inches") #This is super rough since the enclosing circle isnt always perfect, but I dont think theres really a fix for that
+        #print(inches, "inches") #This is super rough since the enclosing circle isnt always perfect, but I dont think theres really a fix for that
 
 
         # only proceed if the radius meets a minimum size
-        if radius > 5:
+        if radius >= 4:
 			# draw the circle and centroid on the frame
 			# then update the list of tracked points
             cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
             cv2.circle(frame, center, 5, (0, 0, 255), -1)
-
+            
             '''
             Drive based off of distance, and where in the screen reigon the ball is
             waits until at least 10 loops have been completed so that theres actually
             time to perform inputs
             '''
 
-            if counter >=8:
-                #screen width = 600
-                #if x is in center 3/5, go forward
-                if inches <= 12:
-                    robot.write(b'0')
-                    print("ball captured")
+            #screen width = 600
+            #if x is in center 3/5, go forward
+            if inches <= 12:
+                stop()
+                print("ball captured")
 
-                elif x >= 120 and x <= 480:
-                    robot.write(b'1')
-                    print("forward")
+            elif x >= 120 and x <= 480:
+                forward()
+                print("forward")
                     
-                    #pass
-                #if to left 5th, turn left
-                elif x < 120:
-                    robot.write(b'2')
-                    print('left')
+            #if to left 5th, turn left
+            elif x < 120:
+                left()
+                print('left')
 
-                    #pass
-                #if to the right, turn right
-                elif x < 480:
-                    robot.write(b'3')
-                    print('right')
-                    #pass
-                
-                    
-                counter=0
+            #if to the right, turn right
+            elif x > 480:
+                right()
+                print('right')
 
-        #if radius < boundary
+            print(drive_state)
+
+        #if radius <
         else:
             #if no ball, stop
-            robot.write(b'0')
+            stop()
             print('STOP radius doesnt exist')
-            #pass
 
-    counter+=1
-    print(counter)
 
 	# update the points queue
     pts.appendleft(center)
